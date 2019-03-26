@@ -19,10 +19,8 @@ def send_files(message):
     for root, subfolders, files in os.walk(data_folder_path+str(message.from_user.id),topdown=False):                    
         for current_file in files:
             if current_file[0]!='.':
-                # print(current_file.encode('utf-8'))
                 files = {'document': (open(root+'/'+current_file, 'rb'))}            
                 status = requests.post(f'https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id=' + str(message.chat.id),files=files)
-                # print(status.apparent_encoding())
             os.remove(root+'/'+current_file)                           
         os.rmdir(root)
 
