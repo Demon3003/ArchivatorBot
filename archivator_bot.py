@@ -6,9 +6,11 @@ import os
 from datetime import datetime
 from collections import defaultdict
 from urllib.parse import quote
-# quote(current_file, encoding='cp1251') 
 
-TOKEN='610620382:AAG6d0l4SVeWqHaNH6O8yRee_ZyGxywjTkE'
+
+TOKEN=''
+MAX_DOWNLOAD_SIZE=20971520
+MAX_SEND_SIZE=52428800
 API_URL=f'https://api.telegram.org/file/bot{TOKEN}/'
 USER_DICT=defaultdict(list)
 data_folder_path='python_bot/data/'
@@ -54,18 +56,23 @@ def rar_extract(file_info,user_id):
 def command(message: Message):
     if message.text=='/start':
         bot.send_message(message.chat.id,"sss")
+        
     elif message.text=='/help':
         bot.send_message(message.chat.id,'👍')
+        
     elif message.text=='/make_archive' and USER_DICT[message.from_user.id]==[]:
         bot.send_message(message.chat.id,'Drop files as much as you need. When you finish send /stop to make archive or /cancel to cancel the process.')
         if USER_DICT[message.from_user.id]==[]:
             USER_DICT[message.from_user.id].append(0)
+            
     elif message.text=='/extract_files' and USER_DICT[message.from_user.id]==[]:
         bot.send_message(message.chat.id,'Drop your archive.')
         if USER_DICT[message.from_user.id]==[]:
             USER_DICT[message.from_user.id].append(1)
+            
     elif message.text=='/cancel' and USER_DICT[message.from_user.id]!=[]:
         USER_DICT.pop(message.from_user.id)
+        
     elif message.text=='/stop' and USER_DICT[message.from_user.id]!=[]:
             if len(USER_DICT[message.from_user.id])>1:
 
@@ -89,7 +96,7 @@ def command(message: Message):
                         if os.path.isfile(f_path):
                             os.remove(f_path)
                         
-                        if os.path.getsize(data_folder_path+user_id+'/your_archive.zip') > 52428800:
+                        if os.path.getsize(data_folder_path+user_id+'/your_archive.zip') > MAX_SEND_SIZE:
                             bot.send_message(message.chat.id,"Bot can't send files over 50 MB")
                             overflow=1
                             break
@@ -103,7 +110,6 @@ def command(message: Message):
                 else:
                     file_info=USER_DICT[message.from_user.id][1]                 
                     f_path = data_folder_path+user_id+'/'+file_info[1]
-
                     download_files(file_info,user_id)
             
                     if zipfile.is_zipfile(f_path):
@@ -131,13 +137,10 @@ def answer(message:Message):
    
 
 @bot.message_handler(content_types=['document'])
-def rir(message:Message):
-    
-    
+def rir(message:Message):        
     if USER_DICT[message.from_user.id]!=[]:
 
-
-        if message.document.file_size <= 20971520:
+        if message.document.file_size <= MAX_DOWNLOAD_SIZE:
             USER_DICT[message.from_user.id].append((bot.get_file(message.document.file_id).file_path,message.document.file_name))
             print(USER_DICT)
         else:
